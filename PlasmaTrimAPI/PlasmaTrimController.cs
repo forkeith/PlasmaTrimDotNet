@@ -137,9 +137,10 @@ namespace PlasmaTrimAPI
             for (var i = 0; i < 8; i++)
             {
                 // Extract RGB data from this LED position
-                var R = data[(3 * i) + 2];
-                var G = data[(3 * i) + 3];
-                var B = data[(3 * i) + 4];
+                var base_index = 3 * i;
+                var R = data[base_index + 2];
+                var G = data[base_index + 3];
+                var B = data[base_index + 4];
 
                 // Create a color.
                 colors[i] = Color.FromArgb(R, G, B);
@@ -149,7 +150,7 @@ namespace PlasmaTrimAPI
         }
 
         /// <summary>
-        /// Sets all LED colors immediately, without storing the change.
+        /// Set the color and the brightness to full, and slowly dim it.
         /// </summary>
         public void PulseColor(Color color)
         {
@@ -161,7 +162,7 @@ namespace PlasmaTrimAPI
                 // Set the color and brightness.
                 this.SetColorsImmediate(colors, brightness);
 
-                // TODO: Not this.
+                // TODO: Not this. Task.Delay maybe?
                 Thread.Sleep(15);
             }
 

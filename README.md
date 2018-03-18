@@ -9,4 +9,4 @@ It makes use of https://github.com/mikeobrien/HidLibrary to talk to the underlyi
 # Other Useful Resources
 
 Now that the www.thephotonfactory.com website seems to be dead (the manufacturer of this hardware), it could be useful to find other related resources, so I will list some here:
-http://www.nottale.net/index.php?project=plasmatrim-combiner
+- http://www.nottale.net/index.php?project=plasmatrim-combiner
