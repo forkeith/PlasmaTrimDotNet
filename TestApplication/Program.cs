@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -27,66 +28,79 @@ namespace TestApplication
 
             // Pause, wait for input.
             Console.WriteLine("Press any key to start!");
-
-            if (devices.Any())
-                Console.ReadKey();
+            Console.ReadKey();
 
             // We're going to operate on all attached devices.
             foreach (var device in devices)
             {
-                // Open a connection to this device.
-                Console.WriteLine("[{0}] Opening connection to {0}.", device.SerialNumber);
-                device.OpenDevice();
-
-                // Start off by stopping the animation.
-                Console.WriteLine("[{0}] Stopping animation.", device.SerialNumber);
-                device.StopStoredSequence();
-
-                // Wait for it...
-                Console.WriteLine("[{0}] Pausing 2 seconds.", device.SerialNumber);
-                Thread.Sleep(2000);
-
-                // Restart the animation.
-                Console.WriteLine("[{0}] Starting animation.", device.SerialNumber);
-                device.PlayStoredSequence();
-
-                // Wait for it...
-                Console.WriteLine("[{0}] Pausing 2 seconds.", device.SerialNumber);
-                Thread.Sleep(2000);
-
-                // Iterate over a few colors for the sake of testing.
-                Color[] testColors = new Color[] { Color.Red, Color.Blue, Color.Green, Color.White, Color.Pink, Color.Yellow, Color.Aquamarine, Color.Cyan };
-
-                foreach (var color in testColors)
+                try
                 {
-                    Console.WriteLine("[{0}] Color Test.", device.SerialNumber);
-                    device.SetColorsImmediate(PlasmaTrimController.GetArrayOfColor(color), PlasmaTrimController.MaxBrightness);
+                    // Open a connection to this device.
+                    Console.WriteLine("[{0}] Opening connection to {0}.", device.SerialNumber);
+                    device.OpenDevice();
 
-                    var requestedColors = device.GetColorsImmediate();
+                    // Start off by stopping the animation.
+                    Console.WriteLine("[{0}] Stopping animation.", device.SerialNumber);
+                    device.StopStoredSequence();
+                    
+                    // Wait for it...
+                    Console.WriteLine("[{0}] Pausing 2 seconds.", device.SerialNumber);
+                    Thread.Sleep(2000);
 
-                    Console.WriteLine("[{0}] Color at position 1: {1}, {2}, {3}", device.SerialNumber, requestedColors[0].R, requestedColors[0].G, requestedColors[0].B);
-                    Thread.Sleep(750);
+                    // Restart the animation.
+                    Console.WriteLine("[{0}] Starting animation.", device.SerialNumber);
+                    device.PlayStoredSequence();
+
+                    // Wait for it...
+                    Console.WriteLine("[{0}] Pausing 2 seconds.", device.SerialNumber);
+                    Thread.Sleep(2000);
+
+                    // Iterate over a few colors for the sake of testing.
+                    Color[] testColors = new Color[] { Color.Red, Color.Blue, Color.Green, Color.White, Color.Pink, Color.Yellow, Color.Aquamarine, Color.Cyan };
+
+                    foreach (var color in testColors)
+                    {
+                        Console.WriteLine("[{0}] Color Test.", device.SerialNumber);
+                        device.SetColorsImmediate(PlasmaTrimController.GetArrayOfColor(color), PlasmaTrimController.MaxBrightness);
+
+                        var requestedColors = device.GetColorsImmediate();
+
+                        Console.WriteLine("[{0}] Color at position 1: {1}, {2}, {3}", device.SerialNumber, requestedColors[0].R, requestedColors[0].G, requestedColors[0].B);
+                        Thread.Sleep(750);
+                    }
+
+                    // Test pulse
+                    foreach (var color in testColors)
+                    {
+                        Console.WriteLine("[{0}] Pulse Test {1}, {2}, {3}.", device.SerialNumber, color.R, color.G, color.B);
+                        device.PulseColor(color).Wait();
+                    }
+                    
+                    var seq = device.GetSequence().ToArray();
+                    using (var sw = File.CreateText(@"d:\tmp\sequence.ptseq"))
+                    {
+                        SequenceFile.WriteSequence(sw, seq);
+                    }
+                    device.SetSequence(seq);
+
+                    // Restart the animation.
+                    Console.WriteLine("[{0}] Starting animation.", device.SerialNumber);
+                    device.PlayStoredSequence();
                 }
-
-                // Test pulse
-                foreach (var color in testColors)
+                finally
                 {
-                    Console.WriteLine("[{0}] Pulse Test.", device.SerialNumber);
-                    device.PulseColor(color).Wait();
+                    // Close a connection to this device.
+                    Console.WriteLine("[{0}] Closing connection to {0}.", device.SerialNumber);
+                    device.CloseDevice();
                 }
-
-                // Restart the animation.
-                Console.WriteLine("[{0}] Starting animation.", device.SerialNumber);
-                device.PlayStoredSequence();
-
-                // Close a connection to this device.
-                Console.WriteLine("[{0}] Closing connection to {0}.", device.SerialNumber);
-                device.CloseDevice();
-
             }
 
             // Pause, wait for input.
-            Console.ReadKey();
+            if (devices.Any())
+            {
+                Console.WriteLine("Finished - press any key to exit.");
+                Console.ReadKey();
+            }
         }
     }
 }
