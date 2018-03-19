@@ -19,6 +19,9 @@ namespace PlasmaTrimAPI
         /// </summary>
         public string SerialNumber { get; private set; }
 
+        public const byte MaxBrightness = 0x64;
+        public const int LedCount = 8;
+
         /// <summary>
         /// The device handle.
         /// </summary>
@@ -37,7 +40,7 @@ namespace PlasmaTrimAPI
 
             // First, let's do a sanity check, in case someone tried to pass a weird device in here.
             if (device.Attributes.VendorId != PlasmaTrimEnumerator.VendorId || device.Attributes.ProductId != PlasmaTrimEnumerator.ProductId)
-                throw new ArgumentException("Provided device could not be identified as a PlasmaTrim!");
+                throw new ArgumentException("Provided device could not be identified as a PlasmaTrim!", nameof(device));
 
             // Store the reference to the device.
             this.Device = device;
@@ -46,7 +49,7 @@ namespace PlasmaTrimAPI
             this.GetDeviceDetails();
 
         }
-       
+
         #endregion
 
         #region Public Methods
@@ -97,8 +100,8 @@ namespace PlasmaTrimAPI
         {
 
             // Sanity check!
-            if (colors == null || colors.Length != 8)
-                throw new ArgumentException("Color array must contain 8 elements!");
+            if (colors == null || colors.Length != LedCount)
+                throw new ArgumentException($"Color array must contain {LedCount} elements!", nameof(colors));
 
             // Set up our command buffer
             byte[] data = new byte[25];
@@ -115,7 +118,7 @@ namespace PlasmaTrimAPI
             }
 
             // Limit the brightness and set it.
-            if (brightness > 0x64) brightness = 0x64;
+            if (brightness > MaxBrightness) brightness = MaxBrightness;
             data[colorIndex] = brightness;
 
             // Finally, actually execute the command.
@@ -131,10 +134,10 @@ namespace PlasmaTrimAPI
         {
             // Get color data from the device.
             var data = this.QueryDevice(PlasmaTrimCommand.GetColorImmediate);
-            Color[] colors = new Color[8];
+            Color[] colors = new Color[LedCount];
 
             // Build color objects.
-            for (var i = 0; i < 8; i++)
+            for (var i = 0; i < LedCount; i++)
             {
                 // Extract RGB data from this LED position
                 var base_index = 3 * i;
@@ -152,23 +155,23 @@ namespace PlasmaTrimAPI
         /// <summary>
         /// Set the color and the brightness to full, and slowly dim it.
         /// </summary>
-        public void PulseColor(Color color)
+        public async Task PulseColor(Color color)
         {
             var colors = GetArrayOfColor(color);
 
-            // Pulse the color
-            for (byte brightness = 0x63; brightness > 0; brightness -= 3)
+            // Pulse the color from 99% to 0% brightness in 3% decrements
+            // sleeping for 15 milliseconds each time, for a total of 495 milliseconds - just under half a second
+            for (byte brightness = MaxBrightness - 1; brightness > 0; brightness -= 3)
             {
                 // Set the color and brightness.
                 this.SetColorsImmediate(colors, brightness);
 
-                // TODO: Not this. Task.Delay maybe?
-                Thread.Sleep(15);
+                await Task.Delay(15);
             }
 
             // Return the device to maximum brightness.
             // TODO: SetBrightnessImmediate method!
-            this.SetColorsImmediate(colors, 0x63);
+            this.SetColorsImmediate(colors, MaxBrightness);
         }
 
         #endregion
@@ -241,14 +244,9 @@ namespace PlasmaTrimAPI
         /// </summary>
         /// <param name="color">The color to project across the array</param>
         /// <returns>A populated array.</returns>
-        private Color[] GetArrayOfColor(Color color)
+        public static Color[] GetArrayOfColor(Color color)
         {
-            Color[] colors = new Color[8];
-
-            for (var i = 0; i < 8; i++)
-                colors[i] = color;
-
-            return colors;
+            return Enumerable.Repeat(color, LedCount).ToArray();
         }
 
         #endregion

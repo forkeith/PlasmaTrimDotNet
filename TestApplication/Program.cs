@@ -14,11 +14,11 @@ namespace TestApplication
         static void Main(string[] args)
         {
             // First, let's enumerate all the PlasmaTrim devices connected.
-            var devices = PlasmaTrimEnumerator.FindConnected();
+            var devices = PlasmaTrimEnumerator.FindConnected().ToArray();
 
             // List out all the devices we've located.
-            Console.WriteLine("Located {0} PlasmaTrim devices:", devices.Count());
-            
+            Console.WriteLine("Located {0} PlasmaTrim devices:", devices.Length);
+
             // Iterate over 'em and display 'em.
             for (var i = 0; i < devices.Length; i++)
             {
@@ -27,7 +27,9 @@ namespace TestApplication
 
             // Pause, wait for input.
             Console.WriteLine("Press any key to start!");
-            Console.ReadKey();
+
+            if (devices.Any())
+                Console.ReadKey();
 
             // We're going to operate on all attached devices.
             foreach (var device in devices)
@@ -58,7 +60,7 @@ namespace TestApplication
                 foreach (var color in testColors)
                 {
                     Console.WriteLine("[{0}] Color Test.", device.SerialNumber);
-                    device.SetColorsImmediate(GetArrayOfColor(color).ToArray(), 100);
+                    device.SetColorsImmediate(PlasmaTrimController.GetArrayOfColor(color), PlasmaTrimController.MaxBrightness);
 
                     var requestedColors = device.GetColorsImmediate();
 
@@ -70,7 +72,7 @@ namespace TestApplication
                 foreach (var color in testColors)
                 {
                     Console.WriteLine("[{0}] Pulse Test.", device.SerialNumber);
-                    device.PulseColor(color);
+                    device.PulseColor(color).Wait();
                 }
 
                 // Restart the animation.
@@ -85,11 +87,6 @@ namespace TestApplication
 
             // Pause, wait for input.
             Console.ReadKey();
-        }
-
-        private static IEnumerable<Color> GetArrayOfColor(Color color)
-        {
-            return Enumerable.Repeat(color, 8);
         }
     }
 }

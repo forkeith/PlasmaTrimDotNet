@@ -29,15 +29,15 @@ namespace PlasmaTrimAPI
         /// <summary>
         /// Locates all connected PlasmaTrim units and returns them.
         /// </summary>
-        /// <returns>An array of PlasmaTrim units.</returns>
-        public static PlasmaTrimController[] FindConnected()
+        /// <returns>An enumerable of PlasmaTrim units.</returns>
+        public static IEnumerable<PlasmaTrimController> FindConnected()
         {
-            
+
             // Locate all the connected PlasmaTrim units.
             var devices = HidDevices.Enumerate(VendorId, ProductId);
 
             // New up some PlasmaTrimControllers and send 'em back.
-            return devices.Select(device => new PlasmaTrimController(device)).ToArray();
+            return devices.Select(device => new PlasmaTrimController(device));
 
         }
 
