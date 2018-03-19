@@ -134,20 +134,7 @@ namespace PlasmaTrimAPI
         {
             // Get color data from the device.
             var data = this.QueryDevice(PlasmaTrimCommand.GetColorImmediate);
-            Color[] colors = new Color[LedCount];
-
-            // Build color objects.
-            for (var i = 0; i < LedCount; i++)
-            {
-                // Extract RGB data from this LED position
-                var base_index = 3 * i;
-                var R = data[base_index + 2];
-                var G = data[base_index + 3];
-                var B = data[base_index + 4];
-
-                // Create a color.
-                colors[i] = Color.FromArgb(R, G, B);
-            }
+            var colors = GetColorsImpl(data);
 
             return colors;
         }
@@ -158,20 +145,70 @@ namespace PlasmaTrimAPI
         public async Task PulseColor(Color color)
         {
             var colors = GetArrayOfColor(color);
+            this.SetColorsImmediate(colors, MaxBrightness);
 
             // Pulse the color from 99% to 0% brightness in 3% decrements
             // sleeping for 15 milliseconds each time, for a total of 495 milliseconds - just under half a second
             for (byte brightness = MaxBrightness - 1; brightness > 0; brightness -= 3)
             {
-                // Set the color and brightness.
-                this.SetColorsImmediate(colors, brightness);
+                // Set the brightness.
+                this.SetBrightnessImmediate(brightness);
 
                 await Task.Delay(15);
             }
 
             // Return the device to maximum brightness.
-            // TODO: SetBrightnessImmediate method!
-            this.SetColorsImmediate(colors, MaxBrightness);
+            this.SetBrightnessImmediate(MaxBrightness);
+        }
+
+        public byte GetBrightnessImmediate()
+        {
+            return this.QueryDevice(PlasmaTrimCommand.GetBrightness).First();
+        }
+
+        public void SetBrightnessImmediate(byte brightness)
+        {
+            if (brightness > MaxBrightness)
+                brightness = MaxBrightness;
+            this.SendCommand(PlasmaTrimCommand.SetBrightness, new byte[] { brightness });
+        }
+
+        public IEnumerable<SequenceStep> GetSequence()
+        {
+            var length = this.QueryDevice(PlasmaTrimCommand.GetSequenceLength).First();
+            var request_step = new byte[1];
+            for (byte i = 0; i < length; i++)
+            {
+                request_step[0] = i;
+                var data = this.QueryDevice(PlasmaTrimCommand.GetSequenceStep, request_step);
+                yield return new SequenceStep(GetColorsImpl(data), (PlasmaTrimTiming)data[29], (PlasmaTrimTiming)data[30]);
+            }
+        }
+
+        public void SetSequence(IEnumerable<SequenceStep> steps)
+        {
+            var arr_steps = steps.ToArray();
+            if (arr_steps.Length > 76)
+                throw new ArgumentException("Sequence must have no more than 76 steps", nameof(steps));
+
+            this.SendCommand(PlasmaTrimCommand.SetSequenceLength, new byte[] { (byte)arr_steps.Length  });
+            var data = new byte[30];
+            for (byte i = 0; i < arr_steps.Length; i++)
+            {
+                // Fill the buffer with colors!
+                var colorIndex = 0;
+
+                // Populate the color arguments
+                foreach (var color in arr_steps[i].Colors)
+                {
+                    data[colorIndex++] = color.R;
+                    data[colorIndex++] = color.G;
+                    data[colorIndex++] = color.B;
+                }
+                data[29] = (byte)arr_steps[i].HoldTime;
+                data[30] = (byte)arr_steps[i].FadeTime;
+                this.SendCommand(PlasmaTrimCommand.SetSequenceStep, data);
+            }
         }
 
         #endregion
@@ -239,6 +276,25 @@ namespace PlasmaTrimAPI
             return this.Device.ReadReport(1).Data;
         }
 
+        private Color[] GetColorsImpl(byte[] data)
+        {
+            Color[] colors = new Color[LedCount];
+
+            // Build color objects.
+            for (var i = 0; i < LedCount; i++)
+            {
+                // Extract RGB data from this LED position
+                var base_index = 3 * i;
+                var R = data[base_index + 2];
+                var G = data[base_index + 3];
+                var B = data[base_index + 4];
+
+                // Create a color.
+                colors[i] = Color.FromArgb(R, G, B);
+            }
+            return colors;
+        }
+
         /// <summary>
         /// Gets an array of one color.
         /// </summary>
@@ -269,6 +325,4 @@ namespace PlasmaTrimAPI
         SetBrightness = 0x0B,
         GetBrightness = 0x0C
     }
-
-
 }

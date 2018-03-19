@@ -49,7 +49,9 @@
   <ItemGroup>
     <Compile Include="PlasmaTrimController.cs" />
     <Compile Include="PlasmaTrimEnumerator.cs" />
+    <Compile Include="PlasmaTrimTiming.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SequenceStep.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

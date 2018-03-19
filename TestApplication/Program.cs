@@ -79,6 +79,8 @@ namespace TestApplication
                 Console.WriteLine("[{0}] Starting animation.", device.SerialNumber);
                 device.PlayStoredSequence();
 
+                var seq = device.GetSequence().ToArray();
+
                 // Close a connection to this device.
                 Console.WriteLine("[{0}] Closing connection to {0}.", device.SerialNumber);
                 device.CloseDevice();
