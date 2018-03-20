@@ -21,6 +21,7 @@ namespace PlasmaTrimAPI
 
         public const byte MaxBrightness = 0x64;
         public const int LedCount = 8;
+        public const int MaxSequenceSteps = 76;
 
         /// <summary>
         /// The device handle.
@@ -194,8 +195,8 @@ namespace PlasmaTrimAPI
         public void SetSequence(IEnumerable<SequenceStep> steps)
         {
             var arr_steps = steps.ToArray();
-            if (arr_steps.Length > 75)
-                throw new ArgumentException("Sequence must have no more than 76 steps", nameof(steps));
+            if (arr_steps.Length > MaxSequenceSteps)
+                throw new ArgumentException("Sequence must have no more than {MaxSequenceSteps} steps", nameof(steps));
 
             this.SendCommand(PlasmaTrimCommand.SetSequenceLength, new byte[] { (byte)arr_steps.Length  });
             var data = new byte[30];
