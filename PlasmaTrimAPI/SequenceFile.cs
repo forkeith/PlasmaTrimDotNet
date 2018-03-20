@@ -37,5 +37,39 @@ namespace PlasmaTrimAPI
                 index++;
             }
         }
+
+        public static IEnumerable<SequenceStep> ReadSequence(StreamReader reader)
+        {
+            var line = reader.ReadLine();
+            if (line != @"PlasmaTrim RGB-8 Sequence")
+                throw new InvalidDataException("File is not recognized as a valid PlasmaTrim sequence");
+            line = reader.ReadLine();
+            if (line != @"Version: Simple Sequence Format")
+                throw new InvalidDataException("File is not recognized as a valid PlasmaTrim sequence");
+
+            line = reader.ReadLine();
+            if (!line.StartsWith(@"Active Slots: "))
+                throw new InvalidDataException("File is not recognized as a valid PlasmaTrim sequence");
+
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrEmpty(line))
+                    continue;
+                var items = line.Split(' ');
+
+                var hold = items[2];
+                var fade = items[3];
+                var colors = new List<Color>();
+                for (var index = 0; index < items[5].Length; index += 3)
+                {
+                    int ToInt(int offset)
+                    {
+                        return int.Parse(items[5][index + offset].ToString(), System.Globalization.NumberStyles.HexNumber) * 16;
+                    }
+                    colors.Add(Color.FromArgb(ToInt(0), ToInt(1), ToInt(2)));
+                }
+                yield return new SequenceStep(colors.ToArray(), (byte)int.Parse(hold), (byte)int.Parse(fade));
+            }
+        }
     }
 }

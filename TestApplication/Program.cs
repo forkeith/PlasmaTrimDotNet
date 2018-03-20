@@ -77,10 +77,17 @@ namespace TestApplication
                     }
                     
                     var seq = device.GetSequence().ToArray();
-                    using (var sw = File.CreateText(@"d:\tmp\sequence.ptseq"))
+                    // write the sequence to a file
+                    using (var sw = File.CreateText(@"d:\tmp\sequence.ptSeq"))
                     {
                         SequenceFile.WriteSequence(sw, seq);
                     }
+                    // prove we can read it back again
+                    using (var sr = new StreamReader(@"d:\tmp\sequence.ptSeq"))
+                    {
+                        var seq2 = SequenceFile.ReadSequence(sr).ToArray();
+                    }
+                    // update the sequence on the device (this currently just sets it to the same sequence)
                     device.SetSequence(seq);
 
                     // Restart the animation.
