@@ -19,6 +19,11 @@ namespace PlasmaTrimAPI
         /// </summary>
         public string SerialNumber { get; private set; }
 
+        /// <summary>
+        /// The configurable name of this PlasmaTrim device.
+        /// </summary>
+        public string Name { get; private set; }
+
         public const byte MaxBrightness = 0x64;
         public const int LedCount = 8;
         public const int MaxSequenceSteps = 76;
@@ -246,6 +251,8 @@ namespace PlasmaTrimAPI
             // Save the serial on this object
             this.SerialNumber = BitConverter.ToString(new ArraySegment<byte>(deviceInfo, 1, 4).Reverse().ToArray());
 
+            var name_buffer = this.QueryDevice(PlasmaTrimCommand.GetDeviceName);
+            this.Name = Encoding.UTF8.GetString(name_buffer).Trim('\0');
             // Close the connection for now.
             this.CloseDevice();
 
