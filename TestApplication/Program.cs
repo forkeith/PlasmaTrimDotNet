@@ -85,7 +85,7 @@ namespace TestApplication
                     // prove we can read it back again
                     using (var sr = new StreamReader(@"d:\tmp\sequence.ptSeq"))
                     {
-                        var seq2 = SequenceFile.ReadSequence(sr).ToArray();
+                        var seq2 = SequenceFile.ReadSequence(sr, out var active).Take(active).ToArray();
                     }
                     // update the sequence on the device (this currently just sets it to the same sequence)
                     device.SetSequence(seq);
