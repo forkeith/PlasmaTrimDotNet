@@ -188,7 +188,7 @@ namespace PlasmaTrimAPI
                 var four_bit = data.Skip(2).Take(12);
                 var holdfade = data[14];
                 var eight_bit = four_bit.SelectMany(b => new[] { b >> 4, b & 0xF }).Select(i => (byte)(i * 16)).ToArray();
-                yield return new SequenceStep(GetColorsImpl(eight_bit, 0), (byte)(holdfade >> 4), (byte)(holdfade & 0xF));
+                yield return new SequenceStep(GetColorsImpl(eight_bit, 0), (PlasmaTrimTiming)(holdfade >> 4), (PlasmaTrimTiming)(holdfade & 0xF));
             }
         }
 
@@ -222,7 +222,7 @@ namespace PlasmaTrimAPI
                 {
                     data[dataIndex + 1] = (byte)((intermediate[colorIndex++] << 4) + intermediate[colorIndex++]);
                 }
-                data[13] = (byte)(((step.HoldTime & 0xF) << 4) + (step.FadeTime & 0xF));
+                data[13] = (byte)((((byte)step.HoldTime & 0xF) << 4) + ((byte)step.FadeTime & 0xF));
                 this.QueryDevice(PlasmaTrimCommand.SetSequenceStep, data);
             }
         }

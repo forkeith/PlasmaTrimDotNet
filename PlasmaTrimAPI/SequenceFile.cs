@@ -75,7 +75,7 @@ namespace PlasmaTrimAPI
                     }
                     colors.Add(Color.FromArgb(ToInt(0), ToInt(1), ToInt(2)));
                 }
-                yield return new SequenceStep(colors.ToArray(), (byte)int.Parse(hold), (byte)int.Parse(fade));
+                yield return new SequenceStep(colors.ToArray(), (PlasmaTrimTiming)int.Parse(hold), (PlasmaTrimTiming)int.Parse(fade));
             }
         }
     }
