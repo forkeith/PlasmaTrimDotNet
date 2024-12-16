@@ -5,7 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using HidLibrary;
+using LibUsbDotNet;
+using LibUsbDotNet.LibUsb;
+using LibUsbDotNet.Main;
 
 namespace PlasmaTrimAPI
 {
@@ -31,22 +33,22 @@ namespace PlasmaTrimAPI
         /// <summary>
         /// The device handle.
         /// </summary>
-        private HidDevice Device { get; set; }
+        private UsbDevice Device { get; set; }
 
         #endregion
 
         #region Constructor
 
         /// <summary>
-        /// Constructs a new PlasmaTrimController object from an HidDevice object.
+        /// Constructs a new PlasmaTrimController object from an IUsbDevice object.
         /// </summary>
-        /// <param name="device">An HidDevice object that is a reference to a PlasmaTrimController</param>
-        public PlasmaTrimController(HidDevice device)
+        /// <param name="device">An IUsbDevice object that is a reference to a PlasmaTrimController</param>
+        public PlasmaTrimController(UsbDevice device)
         {
 
             // First, let's do a sanity check, in case someone tried to pass a weird device in here.
-            if (device.Attributes.VendorId != PlasmaTrimEnumerator.VendorId || device.Attributes.ProductId != PlasmaTrimEnumerator.ProductId)
-                throw new ArgumentException("Provided device could not be identified as a PlasmaTrim!", nameof(device));
+            //if (device.VendorId != PlasmaTrimEnumerator.VendorId || device.ProductId != PlasmaTrimEnumerator.ProductId)
+            //    throw new ArgumentException("Provided device could not be identified as a PlasmaTrim!", nameof(device));
 
             // Store the reference to the device.
             this.Device = device;
@@ -67,7 +69,7 @@ namespace PlasmaTrimAPI
         {
 
             // Pretty self-explanatory.
-            this.Device.OpenDevice();
+            this.Device.Open();
 
         }
 
@@ -79,7 +81,7 @@ namespace PlasmaTrimAPI
 
             // Also self-explanatory.
             if (this.Device.IsOpen)
-                this.Device.CloseDevice();
+                this.Device.Close();
 
         }
 
@@ -243,19 +245,25 @@ namespace PlasmaTrimAPI
         {
 
             // Open a connection to the device
-            this.OpenDevice();
+            try
+            {
+                this.OpenDevice();
+                // Select config #1
+                //Device.SetConfiguration(1);
+                //Device.ClaimInterface(1);
 
-            // Get the device's serial number.
-            var deviceInfo = this.QueryDevice(PlasmaTrimCommand.GetSerialNumber);
+                // Get the device's serial number.
+                var deviceInfo = this.QueryDevice(PlasmaTrimCommand.GetSerialNumber);
 
-            // Save the serial on this object
-            this.SerialNumber = BitConverter.ToString(new ArraySegment<byte>(deviceInfo, 1, 4).Reverse().ToArray());
+                // Save the serial on this object
+                this.SerialNumber = BitConverter.ToString(new ArraySegment<byte>(deviceInfo, 1, 4).Reverse().ToArray());
 
-            var name_buffer = this.QueryDevice(PlasmaTrimCommand.GetDeviceName);
-            this.Name = Encoding.UTF8.GetString(name_buffer).Trim('\0');
-            // Close the connection for now.
-            this.CloseDevice();
-
+                var name_buffer = this.QueryDevice(PlasmaTrimCommand.GetDeviceName);
+                this.Name = Encoding.UTF8.GetString(name_buffer).Trim('\0');
+            } finally {
+                // Close the connection for now.
+                this.CloseDevice();
+            }
         }
 
         /// <summary>
@@ -279,7 +287,11 @@ namespace PlasmaTrimAPI
             if (data != null) data.CopyTo(commandData, 2);
 
             // Actually send the command.
-            if (!this.Device.Write(commandData))
+            //selectedDevice.ClaimInterface(selectedDevice.Configs[0].Interfaces[0].Number);
+
+            // Open up the endpoints
+            var writeEndpoint = this.Device.OpenEndpointWriter(WriteEndpointID.Ep01);
+            if (writeEndpoint.Write(commandData, 3000, out var bytesWritten) != 0) // Error.Success
                 throw new Exception("Unable to send command to PlasmaTrim device!");
 
         }
@@ -296,7 +308,10 @@ namespace PlasmaTrimAPI
             SendCommand(command, data);
 
             // Now, query the device for output and return it.
-            return this.Device.ReadReport(1).Data;
+            var readEndpoint = this.Device.OpenEndpointReader(ReadEndpointID.Ep01);
+            var readBuffer = new byte[64];
+            readEndpoint.Read(readBuffer, 3000, out var readBytes);
+            return readBuffer[0..readBytes];
         }
 
         private Color[] GetColorsImpl(byte[] data, byte offset)

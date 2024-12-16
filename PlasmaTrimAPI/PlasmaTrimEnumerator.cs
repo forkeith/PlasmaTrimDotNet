@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using HidLibrary;
+using LibUsbDotNet;
+using LibUsbDotNet.LibUsb;
+using LibUsbDotNet.Main;
 
 namespace PlasmaTrimAPI
 {
@@ -32,12 +34,15 @@ namespace PlasmaTrimAPI
         /// <returns>An enumerable of PlasmaTrim units.</returns>
         public static IEnumerable<PlasmaTrimController> FindConnected()
         {
-
             // Locate all the connected PlasmaTrim units.
-            var devices = HidDevices.Enumerate(VendorId, ProductId);
+            // var devices = usbDeviceCollection.Where(d => d.ProductId == ProductId && d.VendorId == VendorId);
+            UsbDeviceFinder usbDeviceFinder = new UsbDeviceFinder(VendorId, ProductId);
+
+            var usbDevice = UsbDevice.OpenUsbDevice(usbDeviceFinder);
 
             // New up some PlasmaTrimControllers and send 'em back.
-            return devices.Select(device => new PlasmaTrimController(device));
+            yield return new PlasmaTrimController(usbDevice);
+            //return devices.Select(device => new PlasmaTrimController(device));
 
         }
 
