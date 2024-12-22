@@ -19,7 +19,7 @@ namespace PlasmaTrimAPI
             writer.WriteLine(@"Active Slots: {0}", activeSlots == -1 ? steps.Length : activeSlots);
 
             var index = 0;
-            foreach (var step in sequenceSteps)
+            foreach (var step in steps)
             {
                 writer.Write(@"slot ");
                 writer.Write(index.ToString().PadLeft(2, '0'));
