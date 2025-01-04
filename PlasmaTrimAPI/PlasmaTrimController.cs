@@ -27,6 +27,7 @@ namespace PlasmaTrimAPI
         public const byte MaxBrightness = 0x64;
         public const int LedCount = 8;
         public const int MaxSequenceSteps = 76;
+        private byte[] _responseBuffer = new byte[1024 * 8];
 
         /// <summary>
         /// The device handle.
@@ -178,19 +179,20 @@ namespace PlasmaTrimAPI
             this.QueryDevice(PlasmaTrimCommand.SetBrightness, new byte[] { brightness });
         }
 
-        public IEnumerable<SequenceStep> GetSequence()
+        public IEnumerable<SequenceStep> GetSequence(bool active_only)
         {
             var response = this.QueryDevice(PlasmaTrimCommand.GetSequenceLength);
-            var length = response.Skip(1).First();
+            var active_slots = response.Skip(2).First(); // TODO: move to separate function or add a property to SequenceStep to indicate active or not
+
             var request_step = new byte[30];
-            for (byte step = 0; step < length; step++)
+            for (byte step = 0; step < (active_only ? active_slots : MaxSequenceSteps); step++)
             {
                 request_step[0] = step;
                 var data = this.QueryDevice(PlasmaTrimCommand.GetSequenceStep, request_step);
 
                 // for some reason, the device returns the data in 12 bits, when we need 24...
-                var four_bit = data.Skip(2).Take(12);
-                var holdfade = data[14];
+                var four_bit = data.Skip(3).Take(12);
+                var holdfade = data[15];
                 var eight_bit = four_bit.SelectMany(b => new[] { b >> 4, b & 0xF }).Select(i => (byte)(i * 16)).ToArray();
                 yield return new SequenceStep(GetColorsImpl(eight_bit, 0), (PlasmaTrimTiming)(holdfade >> 4), (PlasmaTrimTiming)(holdfade & 0xF));
             }
@@ -293,7 +295,13 @@ namespace PlasmaTrimAPI
             SendCommand(command, data);
 
             // Now, query the device for output and return it.
-            return _deviceStream.Read();
+            var bytesRead = _deviceStream.Read(_responseBuffer);
+            if (bytesRead == _responseBuffer.Length) {
+                // TODO: read until less than size of buffer is read
+                Console.WriteLine("full buffer warning!");
+            }
+            return _responseBuffer.Take(bytesRead).ToArray();
+
         }
 
         private Color[] GetColorsImpl(byte[] data, byte offset)

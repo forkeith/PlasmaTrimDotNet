@@ -33,7 +33,7 @@ foreach (var device in devices)
         // Wait for it...
         Console.WriteLine("[{0}] Pausing 2 seconds.", device.SerialNumber);
         Thread.Sleep(2000);
-
+        /*
         // Restart the animation.
         Console.WriteLine("[{0}] Starting animation.", device.SerialNumber);
         device.PlayStoredSequence();
@@ -61,9 +61,9 @@ foreach (var device in devices)
         {
             Console.WriteLine("[{0}] Pulse Test {1}, {2}, {3}.", device.SerialNumber, color.R, color.G, color.B);
             device.PulseColor(color).Wait();
-        }
+        }*/
         
-        var seq = device.GetSequence().ToArray();
+        var seq = device.GetSequence(false).ToArray();
         // write the sequence to a file
         using (var sw = File.CreateText(@"./sequence.ptSeq"))
         {
