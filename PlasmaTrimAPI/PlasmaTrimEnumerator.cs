@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using HidLibrary;
+using HidSharp;
 
 namespace PlasmaTrimAPI
 {
@@ -34,7 +34,7 @@ namespace PlasmaTrimAPI
         {
 
             // Locate all the connected PlasmaTrim units.
-            var devices = HidDevices.Enumerate(VendorId, ProductId);
+            var devices = DeviceList.Local.GetHidDevices(vendorID: VendorId, productID: ProductId);
 
             // New up some PlasmaTrimControllers and send 'em back.
             return devices.Select(device => new PlasmaTrimController(device));

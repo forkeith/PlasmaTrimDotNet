@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using HidLibrary;
+using HidSharp;
 
 namespace PlasmaTrimAPI
 {
@@ -31,7 +31,12 @@ namespace PlasmaTrimAPI
         /// <summary>
         /// The device handle.
         /// </summary>
-        private HidDevice Device { get; set; }
+        public HidDevice Device { get; init; }
+
+        /// <summary>
+        /// The open device stream.
+        /// </summary>
+        private HidStream? _deviceStream;
 
         #endregion
 
@@ -45,7 +50,7 @@ namespace PlasmaTrimAPI
         {
 
             // First, let's do a sanity check, in case someone tried to pass a weird device in here.
-            if (device.Attributes.VendorId != PlasmaTrimEnumerator.VendorId || device.Attributes.ProductId != PlasmaTrimEnumerator.ProductId)
+            if (device.VendorID != PlasmaTrimEnumerator.VendorId || device.ProductID != PlasmaTrimEnumerator.ProductId)
                 throw new ArgumentException("Provided device could not be identified as a PlasmaTrim!", nameof(device));
 
             // Store the reference to the device.
@@ -61,26 +66,20 @@ namespace PlasmaTrimAPI
         #region Public Methods
 
         /// <summary>
-        /// Opens a connection to the PlasmaTrim device.
+        /// Connect to the device and get a stream.
         /// </summary>
         public void OpenDevice()
         {
-
-            // Pretty self-explanatory.
-            this.Device.OpenDevice();
-
+            _deviceStream = this.Device.Open();
         }
 
         /// <summary>
-        /// Closes the connection to the PlasmaTrim device.
+        /// Close the connection to the device.
         /// </summary>
         public void CloseDevice()
         {
-
-            // Also self-explanatory.
-            if (this.Device.IsOpen)
-                this.Device.CloseDevice();
-
+            _deviceStream.Close();
+            _deviceStream.Dispose();
         }
 
         /// <summary>
@@ -253,9 +252,9 @@ namespace PlasmaTrimAPI
 
             var name_buffer = this.QueryDevice(PlasmaTrimCommand.GetDeviceName);
             this.Name = Encoding.UTF8.GetString(name_buffer).Trim('\0');
+            
             // Close the connection for now.
             this.CloseDevice();
-
         }
 
         /// <summary>
@@ -267,9 +266,9 @@ namespace PlasmaTrimAPI
         {
 
             // Make sure we're connected to the device.
-            if (!this.Device.IsOpen)
+            if (!_deviceStream.CanWrite)
                 throw new InvalidOperationException("PlasmaTrim device is not connected!");
-
+            
             byte[] commandData = new byte[33];
 
             // Index 1 is the command we want to send.
@@ -279,9 +278,7 @@ namespace PlasmaTrimAPI
             if (data != null) data.CopyTo(commandData, 2);
 
             // Actually send the command.
-            if (!this.Device.Write(commandData))
-                throw new Exception("Unable to send command to PlasmaTrim device!");
-
+            _deviceStream.Write(commandData);
         }
 
         /// <summary>
@@ -296,7 +293,7 @@ namespace PlasmaTrimAPI
             SendCommand(command, data);
 
             // Now, query the device for output and return it.
-            return this.Device.ReadReport(1).Data;
+            return _deviceStream.Read();
         }
 
         private Color[] GetColorsImpl(byte[] data, byte offset)
