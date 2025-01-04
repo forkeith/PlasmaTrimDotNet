@@ -65,17 +65,17 @@ foreach (var device in devices)
         
         var seq = device.GetSequence().ToArray();
         // write the sequence to a file
-        using (var sw = File.CreateText(@"d:\tmp\sequence.ptSeq"))
+        using (var sw = File.CreateText(@"./sequence.ptSeq"))
         {
             SequenceFile.WriteSequence(sw, seq);
         }
         // prove we can read it back again
-        using (var sr = new StreamReader(@"d:\tmp\sequence.ptSeq"))
+        using (var sr = new StreamReader(@"./sequence.ptSeq"))
         {
             var seq2 = SequenceFile.ReadSequence(sr, out var active).Take(active).ToArray();
         }
         // update the sequence on the device (this currently just sets it to the same sequence)
-        device.SetSequence(seq);
+        //device.SetSequence(seq);
 
         // Restart the animation.
         Console.WriteLine("[{0}] Starting animation.", device.SerialNumber);
