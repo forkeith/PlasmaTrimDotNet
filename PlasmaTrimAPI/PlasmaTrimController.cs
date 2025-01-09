@@ -185,7 +185,7 @@ namespace PlasmaTrimAPI
             var response = this.QueryDevice(PlasmaTrimCommand.GetSequenceLength);
             var active_slots = response.Skip(2).First(); // TODO: move to separate function or add a property to SequenceStep to indicate active or not
 
-            var request_step = new byte[30];
+            var request_step = new byte[30]; // TODO: stackalloc
             for (byte step = 0; step < (active_only ? active_slots : MaxSequenceSteps); step++)
             {
                 request_step[0] = step;
@@ -206,28 +206,29 @@ namespace PlasmaTrimAPI
                 throw new ArgumentException("Sequence must have no more than {MaxSequenceSteps} steps", nameof(steps));
 
             this.SendCommand(PlasmaTrimCommand.SetSequenceLength, new byte[] { (byte)arr_steps.Length  });
-            var data = new byte[30];
+            var data = new byte[30]; // TODO: stackalloc
+            Span<byte> eight_bit = stackalloc byte[LedCount * 3];
+            
             for (byte step_index = 0; step_index < arr_steps.Length; step_index++)
             {
                 var step = arr_steps[step_index];
 
                 data[0] = step_index; // slot number
 
+                Func<int, byte> convert = c => (byte)((c / 16) & 0xF);
                 // Fill the buffer with colors!
-                var eight_bit = new byte[LedCount * 3];
                 var colorIndex = 0;
                 foreach (var color in step.Colors)
                 {
-                    eight_bit[colorIndex++] = color.R;
-                    eight_bit[colorIndex++] = color.G;
-                    eight_bit[colorIndex++] = color.B;
+                    eight_bit[colorIndex++] = convert(color.R);
+                    eight_bit[colorIndex++] = convert(color.G);
+                    eight_bit[colorIndex++] = convert(color.B);
                 }
 
-                var intermediate = eight_bit.Select(b => (b / 16) & 0xF).ToArray();
                 colorIndex = 0;
                 for (var dataIndex = 0; dataIndex < LedCount * 3 / 2; dataIndex++)
                 {
-                    data[dataIndex + 1] = (byte)((intermediate[colorIndex++] << 4) + intermediate[colorIndex++]);
+                    data[dataIndex + 1] = (byte)((eight_bit[colorIndex++] << 4) + eight_bit[colorIndex++]);
                 }
                 data[13] = (byte)((((byte)step.HoldTime & 0xF) << 4) + ((byte)step.FadeTime & 0xF));
                 this.QueryDevice(PlasmaTrimCommand.SetSequenceStep, data);
@@ -290,7 +291,7 @@ namespace PlasmaTrimAPI
         /// <param name="command">The command to execute.</param>
         /// <param name="data">The data payload.</param>
         ///         /// <returns>The output of the command</returns>
-        private byte[] QueryDevice(PlasmaTrimCommand command, byte[]? data = null)
+        private byte[] QueryDevice(PlasmaTrimCommand command, byte[]? data = null) // TODO: take ReadOnlySpan<byte>
         {
             // Send the command to the device.
             SendCommand(command, data);
