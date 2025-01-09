@@ -302,6 +302,7 @@ namespace PlasmaTrimAPI
                 // TODO: read until less than size of buffer is read
                 Console.WriteLine("full buffer warning!");
             }
+            // TODO: store requests and responses for mocking during unit tests
             return _responseBuffer.Take(bytesRead).ToArray();
 
         }
