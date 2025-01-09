@@ -48,7 +48,7 @@ namespace PlasmaTrimAPI
                 throw new InvalidDataException("File is not recognized as a valid PlasmaTrim sequence");
 
             line = reader.ReadLine();
-            if (!line.StartsWith(@"Active Slots: "))
+            if (line is null || !line.StartsWith(@"Active Slots: "))
                 throw new InvalidDataException("File is not recognized as a valid PlasmaTrim sequence");
             activeSlots = int.Parse(line.Split(new[] { @"Active Slots: " }, StringSplitOptions.RemoveEmptyEntries)[0]);
 
@@ -57,7 +57,7 @@ namespace PlasmaTrimAPI
 
         private static IEnumerable<SequenceStep> ReadSteps(StreamReader reader)
         {
-            string line;
+            string? line;
             while ((line = reader.ReadLine()) != null)
             {
                 if (string.IsNullOrEmpty(line))

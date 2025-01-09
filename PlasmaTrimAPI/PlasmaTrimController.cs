@@ -17,17 +17,17 @@ namespace PlasmaTrimAPI
         /// <summary>
         /// The serial number of this PlasmaTrim device.
         /// </summary>
-        public string SerialNumber { get; private set; }
+        public string? SerialNumber { get; private set; }
 
         /// <summary>
         /// The configurable name of this PlasmaTrim device.
         /// </summary>
-        public string Name { get; private set; }
+        public string? Name { get; private set; }
 
         public const byte MaxBrightness = 0x64;
         public const int LedCount = 8;
         public const int MaxSequenceSteps = 76;
-        private byte[] _responseBuffer = new byte[1024 * 8];
+        private byte[] _responseBuffer = new byte[128];
 
         /// <summary>
         /// The device handle.
@@ -79,6 +79,7 @@ namespace PlasmaTrimAPI
         /// </summary>
         public void CloseDevice()
         {
+            if (_deviceStream is null) return;
             _deviceStream.Close();
             _deviceStream.Dispose();
         }
@@ -264,14 +265,14 @@ namespace PlasmaTrimAPI
         /// </summary>
         /// <param name="command">The command to execute.</param>
         /// <param name="data">The data payload.</param>
-        private void SendCommand(PlasmaTrimCommand command, byte[] data = null)
+        private void SendCommand(PlasmaTrimCommand command, byte[]? data)
         {
 
             // Make sure we're connected to the device.
-            if (!_deviceStream.CanWrite)
+            if (_deviceStream is null || !_deviceStream.CanWrite)
                 throw new InvalidOperationException("PlasmaTrim device is not connected!");
             
-            byte[] commandData = new byte[33];
+            byte[] commandData = new byte[33]; // TODO: stackalloc instead of new
 
             // Index 1 is the command we want to send.
             commandData[1] = (byte)command;
@@ -289,13 +290,13 @@ namespace PlasmaTrimAPI
         /// <param name="command">The command to execute.</param>
         /// <param name="data">The data payload.</param>
         ///         /// <returns>The output of the command</returns>
-        private byte[] QueryDevice(PlasmaTrimCommand command, byte[] data = null)
+        private byte[] QueryDevice(PlasmaTrimCommand command, byte[]? data = null)
         {
             // Send the command to the device.
             SendCommand(command, data);
 
             // Now, query the device for output and return it.
-            var bytesRead = _deviceStream.Read(_responseBuffer);
+            var bytesRead = _deviceStream!.Read(_responseBuffer);
             if (bytesRead == _responseBuffer.Length) {
                 // TODO: read until less than size of buffer is read
                 Console.WriteLine("full buffer warning!");
