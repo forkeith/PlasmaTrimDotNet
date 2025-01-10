@@ -8,7 +8,7 @@ It makes use of https://www.nuget.org/packages/HidSharp/ to talk to the underlyi
 
 
 ```sh
-sudo dotnet run --project TestApplication
+sudo dotnet run --project SampleApplication
 ```
 
 # Other Useful Resources
