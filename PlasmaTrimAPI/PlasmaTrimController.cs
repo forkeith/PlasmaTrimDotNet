@@ -296,6 +296,8 @@ namespace PlasmaTrimAPI
             // Send the command to the device.
             SendCommand(command, data);
 
+            File.AppendAllText("/home/keith/tmp/ptrim.txt", command.ToString() + (data != null ? Convert.ToHexString(data) : "") + Environment.NewLine);
+
             // Now, query the device for output and return it.
             var bytesRead = _deviceStream!.Read(_responseBuffer);
             if (bytesRead == _responseBuffer.Length) {
@@ -303,6 +305,7 @@ namespace PlasmaTrimAPI
                 Console.WriteLine("full buffer warning!");
             }
             // TODO: store requests and responses for mocking during unit tests
+            File.AppendAllText("/home/keith/tmp/ptrim.txt", Convert.ToHexString(_responseBuffer.Take(bytesRead).ToArray()) + Environment.NewLine);
             return _responseBuffer.Take(bytesRead).ToArray();
 
         }
