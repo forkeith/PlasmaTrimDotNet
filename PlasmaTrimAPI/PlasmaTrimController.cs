@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using HidSharp;
+using HidProxy;
 
 namespace PlasmaTrimAPI
 {
@@ -32,12 +32,12 @@ namespace PlasmaTrimAPI
         /// <summary>
         /// The device handle.
         /// </summary>
-        public HidDevice Device { get; init; }
+        public IHidDevice Device { get; init; }
 
         /// <summary>
         /// The open device stream.
         /// </summary>
-        private HidStream? _deviceStream;
+        private Stream? _deviceStream;
 
         #endregion
 
@@ -47,7 +47,7 @@ namespace PlasmaTrimAPI
         /// Constructs a new PlasmaTrimController object from an HidDevice object.
         /// </summary>
         /// <param name="device">An HidDevice object that is a reference to a PlasmaTrimController</param>
-        public PlasmaTrimController(HidDevice device)
+        public PlasmaTrimController(IHidDevice device)
         {
 
             // First, let's do a sanity check, in case someone tried to pass a weird device in here.

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using HidProxy;
 using HidSharp;
 
 namespace PlasmaTrimAPI
@@ -37,7 +38,7 @@ namespace PlasmaTrimAPI
             var devices = DeviceList.Local.GetHidDevices(vendorID: VendorId, productID: ProductId);
 
             // New up some PlasmaTrimControllers and send 'em back.
-            return devices.Select(device => new PlasmaTrimController(device));
+            return devices.Select(device => new PlasmaTrimController(new ProxiedHidDevice(device)));
 
         }
 

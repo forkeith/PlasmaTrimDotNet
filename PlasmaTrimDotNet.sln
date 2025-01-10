@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlasmaTrimAPI", "PlasmaTrim
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleApplication", "SampleApplication\SampleApplication.csproj", "{C951A10C-391A-410F-8A76-B27F9CB8E301}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlasmaTrimDotNet", "UnitTests\PlasmaTrimDotNet.csproj", "{3B75F290-CA35-46C2-B9DF-0DF6EF88C3F9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{C951A10C-391A-410F-8A76-B27F9CB8E301}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C951A10C-391A-410F-8A76-B27F9CB8E301}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C951A10C-391A-410F-8A76-B27F9CB8E301}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B75F290-CA35-46C2-B9DF-0DF6EF88C3F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B75F290-CA35-46C2-B9DF-0DF6EF88C3F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B75F290-CA35-46C2-B9DF-0DF6EF88C3F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B75F290-CA35-46C2-B9DF-0DF6EF88C3F9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
