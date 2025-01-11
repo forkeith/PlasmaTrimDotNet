@@ -1,4 +1,4 @@
-﻿namespace HidProxy;
+namespace HidProxy;
 
 public interface IHidDevice
 {
