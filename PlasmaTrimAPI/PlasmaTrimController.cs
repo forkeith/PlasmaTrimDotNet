@@ -307,6 +307,7 @@ namespace PlasmaTrimAPI
             }
             // TODO: store requests and responses for mocking during unit tests
             File.AppendAllText("/home/keith/tmp/ptrim.txt", Convert.ToHexString(_responseBuffer.Take(bytesRead).ToArray()) + Environment.NewLine);
+            // TODO: ensure the response starts with the issued command, so we know it is a response to our command, and only return the data following
             return _responseBuffer.Take(bytesRead).ToArray();
 
         }

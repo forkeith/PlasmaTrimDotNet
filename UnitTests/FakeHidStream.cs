@@ -34,7 +34,7 @@ public class FakeHidStream : Stream
             throw new InvalidOperationException("No more responses in the queue.");
         }
 
-        // TODO: keep returning this response until all consumed by the caller
+        // TODO: keep returning this response until all consumed by the caller, unless Write is called, then it should be reset
         var response = Convert.FromHexString(_responseQueue.Dequeue());
         int bytesToCopy = Math.Min(response.Length, count);
         Array.Copy(response, 0, buffer, offset, bytesToCopy);
