@@ -252,10 +252,11 @@ namespace PlasmaTrimAPI
             var deviceInfo = this.QueryDevice(PlasmaTrimCommand.GetSerialNumber);
 
             // Save the serial on this object
-            this.SerialNumber = BitConverter.ToString(new ArraySegment<byte>(deviceInfo, 1, 4).Reverse().ToArray());
+            this.SerialNumber = BitConverter.ToString(new ArraySegment<byte>(deviceInfo, 2, 4).Reverse().ToArray());
 
             var name_buffer = this.QueryDevice(PlasmaTrimCommand.GetDeviceName);
-            this.Name = Encoding.UTF8.GetString(name_buffer).Trim('\0');
+            var name_buffer_span = new ReadOnlySpan<byte>(name_buffer, 2, name_buffer.Length - 2);
+            this.Name = Encoding.UTF8.GetString(name_buffer_span).Trim('\0');
             
             // Close the connection for now.
             this.CloseDevice();

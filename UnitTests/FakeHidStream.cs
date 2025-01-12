@@ -5,28 +5,26 @@ using System.Text;
 
 public class FakeHidStream : Stream
 {
-    private readonly Queue<byte[]> _responseQueue = new Queue<byte[]>();
-    private readonly MemoryStream _writeBuffer = new MemoryStream();
-
+    private readonly List<Func<byte[], string?>> _responseMatchers = new();
+    private readonly Queue<string> _responseQueue = new();
+    
     // Add a mapping of expected writes to pre-programmed responses
-    public void AddResponse(byte[] expectedWrite, string hexResponse)
+    public void MockStreamResponse(Func<byte[], string?> requestResponder)
     {
-        /*public void MockStreamResponse(Func<byte[], bool> requestMatcher, string hexResponse)
-    {
-        // TODO: hook into when stream is written to
-    }*/
-        _responseQueue.Enqueue(Convert.FromHexString(hexResponse));
+        _responseMatchers.Add(requestResponder);
     }
 
     public override void Write(byte[] buffer, int offset, int count)
     {
-        // Capture the written data for comparison or debugging
-        byte[] writtenData = new byte[count];
-        Array.Copy(buffer, offset, writtenData, 0, count);
-
-        // Optionally, compare `writtenData` to an expected value here.
-        // For simplicity, this mock directly serves queued responses.
-        _writeBuffer.Write(writtenData, 0, writtenData.Length);
+        foreach (var requestMatcher in _responseMatchers) // TODO: reverse order. Also provide a way for a matcher to remove itself?
+        {
+            var response = requestMatcher.Invoke(buffer); // TODO: switch to ReadOnlySpan, honor offset and count
+            if (response != null)
+            {
+                _responseQueue.Enqueue(response);
+                break;
+            }
+        }
     }
 
     public override int Read(byte[] buffer, int offset, int count)
@@ -36,7 +34,8 @@ public class FakeHidStream : Stream
             throw new InvalidOperationException("No more responses in the queue.");
         }
 
-        var response = _responseQueue.Dequeue();
+        // TODO: keep returning this response until all consumed by the caller
+        var response = Convert.FromHexString(_responseQueue.Dequeue());
         int bytesToCopy = Math.Min(response.Length, count);
         Array.Copy(response, 0, buffer, offset, bytesToCopy);
 
